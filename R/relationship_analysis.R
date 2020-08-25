@@ -176,19 +176,29 @@ complete_rels <- function(x){
 #' @title Get Active Agedist
 #'
 #' @description This function takes final age attribute and generates a dist of counts
-#' by age, averaged across all simulation runs
+#' by age (only 15:44 counts), averaged across all simulation runs
 #'
 #' @param x is the netsim output
 #' @export
 #'
-get_agedist <- function(x){
+get_agedist <- function(x, categorical=FALSE){
   nsims <- x$control$nsims
   ages <- NULL
 
+
   for (i in 1:nsims){
-    a <- table(floor(x$attr[[i]]$age))
-    ages <- cbind(ages, a)
+    a <- floor(x$attr[[i]]$age)
+    ages <- c(ages, a)
+
   }
 
-  means <- round(apply(ages, 1, mean))
+  ages <- ages[ages<45]
+  means <- table(round(ages))/nsims
+
+  if (categorical==TRUE){
+  ages <- cut(ages, c(15, 20, 25, 30, 35, 40, 45), right=F)
+  means <- table(ages)/nsims
+  }
+
+  return(means)
 }

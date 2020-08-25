@@ -8,15 +8,27 @@
 #' @examples
 #' egodata_meandegs()
 
-egodata_meandegs <- function(){
+egodata_meandegs <- function(categorical=FALSE){
   egosvy <- as_survey(egodat_marcoh$egos, weights="weight")
   egosvy2 <- as_survey(egodat_marcoh_allalters$egos, weights="weight")
 
+  if(categorical==TRUE){
+    marcoh_ages <- egosvy %>% group_by(agecat) %>% summarise(mean=survey_mean(deg.marcoh.binary))
+    marcoh_ages_all <- egosvy2 %>% group_by(agecat) %>% summarise(mean=survey_mean(deg.marcoh.binary))
+
+    casual_ages <- egosvy %>% group_by(agecat) %>% summarise(mean=survey_mean(deg.other))
+    casual_ages_all <- egosvy2 %>% group_by(agecat) %>% summarise(mean=survey_mean(deg.other))
+
+    dat <- list(marcoh_ages, marcoh_ages_all, casual_ages, casual_ages_all)
+
+  } else {
   marcoh_ages <- egosvy %>% group_by(age) %>% summarise(mean=survey_mean(deg.marcoh.binary))
   marcoh_ages_all <- egosvy2 %>% group_by(age) %>% summarise(mean=survey_mean(deg.marcoh.binary))
 
   casual_ages <- egosvy %>% group_by(age) %>% summarise(mean=survey_mean(deg.other))
   casual_ages_all <- egosvy2 %>% group_by(age) %>% summarise(mean=survey_mean(deg.other))
 
-  return(list(marcoh_ages, marcoh_ages_all, casual_ages, casual_ages_all))
+  dat <- list(marcoh_ages, marcoh_ages_all, casual_ages, casual_ages_all)
+  }
+  return(dat)
 }

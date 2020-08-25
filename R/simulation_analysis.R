@@ -9,31 +9,81 @@
 #' @param maxage age at which egos depart model - either 45 or 65
 #' @param marcoh_ages_restricted dist of expected mean degree using age-restricted alter set
 #' @param marcoh_ages_all dist of exp mean degree using all reported alters
+#' @param categorical default = FALSE, whether or not to return dist by age or agecat
 #'
 #' @import ggplot2
 #'
 #' @export
 
-marcoh_dist <- function(x, maxage, marcoh_ages_restricted, marcoh_ages_all){
+marcoh_dist <- function(x, maxage, marcoh_ages_restricted, marcoh_ages_all, categorical=FALSE){
+  if (categorical==TRUE){
+    nsims <- x$control$nsims
+    rels <- active_rels(x)
+    open_pop_counts <- get_agedist(x, categorical=TRUE)
+
+    m <- rels[[1]]
+    ages <- c(m$age1, m$age2)
+
+
+    if (maxage==45){
+      ages <- cut(ages, c(15, 20, 25, 30, 35, 40, 45), right=F)
+    }
+
+    if (maxage==65){
+      ages <- ages[ages<45]
+      ages <- cut(ages, c(15, 20, 25, 30, 35, 40, 45), right=F)
+    }
+
+    tab <- table(ages)/nsims
+    allages <- c(15, 20, 25, 30, 35, 40)
+    ma <- marcoh_ages_restricted[,2][[1]]
+    ma2 <- marcoh_ages_all[,2][[1]]
+
+
+    open_marcoh_meandeg <- tab/open_pop_counts
+
+    open_marcoh <- as.data.frame(cbind(allages, ma, ma2, open_marcoh_meandeg))
+    colnames(open_marcoh) <- c("Ego Age", "Weighted Egodata - Restricted", "Weighted Egodata", "Final State of Network")
+
+    open_plot <- ggplot() +
+      geom_bar(data = open_marcoh, aes(x=`Ego Age`, y=`Final State of Network`, fill="Final State of Network"), stat = "identity",
+               fill="#999999") +
+      geom_point(open_marcoh, mapping=aes(x=`Ego Age`, y=`Weighted Egodata - Restricted`, color="Weighted Egodata - Restricted"))  +
+      geom_point(open_marcoh, mapping=aes(x=`Ego Age`, y=`Weighted Egodata`, color="Weighted Egodata")) +
+      xlab("Ego Age") +
+      ylab("Mean Degree") +
+      ggtitle("Mean Degree of Marriage/Cohabs by Ego Age") +
+      scale_color_manual(name = "Egodata",
+                         labels = c("Weighted Egodata", "Weighted Egodata, All Alters"),
+                         values = c("darkblue", "darkred"))
+  } else {
   nsims <- x$control$nsims
   rels <- active_rels(x)
   open_pop_counts <- get_agedist(x)
 
   m <- rels[[1]]
-  ages <- c(m$age1, m$age2)
-  tab <- table(ages)/nsims
 
-  if (maxage==45){
-    allages <- 15:44
-    ma <- marcoh_ages_restricted[,2][[1]]
-    ma2 <- marcoh_ages_all[,2][[1]]
-  }
+  ages <- c(m$age1, m$age2)
 
   if (maxage==65){
-    allages <- 15:64
-    ma <- c(marcoh_ages_restricted[,2][[1]], rep(NA, 20))
-    ma2 <- c(marcoh_ages_all[,2][[1]], rep(NA, 20))
+    ages <- ages[ages<45]
+    open_pop_counts <- open_pop_counts[which(as.numeric(names(open_pop_counts))<45)]
   }
+
+  tab <- table(ages)
+
+  if(length(tab) < length(open_pop_counts)){
+      missing <- setdiff(as.numeric(names(open_pop_counts)), as.numeric(names(tab)))
+      if (missing==15){
+        tab <- c(0,tab)
+      }
+  }
+
+
+  tab <- tab/nsims
+  allages <- 15:44
+  ma <- marcoh_ages_restricted[,2][[1]]
+  ma2 <- marcoh_ages_all[,2][[1]]
 
   open_marcoh_meandeg <- tab/open_pop_counts
 
@@ -45,11 +95,14 @@ marcoh_dist <- function(x, maxage, marcoh_ages_restricted, marcoh_ages_all){
              fill="#999999") +
     geom_point(open_marcoh, mapping=aes(x=`Ego Age`, y=`Weighted Egodata - Restricted`, color="Weighted Egodata - Restricted"))  +
     geom_point(open_marcoh, mapping=aes(x=`Ego Age`, y=`Weighted Egodata`, color="Weighted Egodata"))+
-    abs(x="Ego Age", y="Count", title="Mean Degree of Marriage/Cohabs by Ego Age") +
+    xlab("Ego Age") +
+    ylab("Mean Degree") +
+    ggtitle("Mean Degree of Marriage/Cohabs by Ego Age") +
     scale_color_manual(name = "Egodata",
                        labels = c("Weighted Egodata", "Weighted Egodata, All Alters"),
                        values = c("darkblue", "darkred"))
 
+  }
   dat <- list(open_plot, open_marcoh)
 
   return(dat)
@@ -70,48 +123,98 @@ marcoh_dist <- function(x, maxage, marcoh_ages_restricted, marcoh_ages_all){
 #'
 #' @import ggplot2
 #' @export
-casual_dist <- function(x, maxage, casual_ages_restricted, casual_ages_all){
-  nsims <- x$control$nsims
-  rels <- active_rels(x)
-  open_pop_counts <- get_agedist(x)
+casual_dist <- function(x, maxage, casual_ages_restricted, casual_ages_all, categorical=FALSE){
+  if (categorical==TRUE){
+    nsims <- x$control$nsims
+    rels <- active_rels(x)
+    open_pop_counts <- get_agedist(x, categorical=TRUE)
 
-  o <- rels[[2]]
-  agesO <- c(o$age1, o$age2)
-  tabO <- table(agesO)/nsims
+    m <- rels[[2]]
+    ages <- c(m$age1, m$age2)
 
-  if (maxage==45){
-    allages <- 15:44
-    ca <- casual_ages_restricted[,2][[1]]
-    ca2 <- casual_ages_all[,2][[1]]
-  }
 
-  if (maxage==65){
-    allages <- 15:64
-    if (max(agesO < 64)){
-      tabO <- as.numeric(c(tabO, rep(0, length((max(agesO)+1):64))))
+    if (maxage==45){
+      ages <- cut(ages, c(15, 20, 25, 30, 35, 40, 45), right=F)
     }
-    ca <- c(casual_ages_restricted[,2][[1]], rep(NA, 20))
-    ca2 <- c(casual_ages_all[,2][[1]], rep(NA, 20))
+
+    if (maxage==65){
+      ages <- ages[ages<45]
+      ages <- cut(ages, c(15, 20, 25, 30, 35, 40, 45), right=F)
+    }
+
+    tab <- table(ages)/nsims
+    allages <- c(15, 20, 25, 30, 35, 40)
+    ma <- casual_ages_restricted[,2][[1]]
+    ma2 <- casual_ages_all[,2][[1]]
+
+
+    open_marcoh_meandeg <- tab/open_pop_counts
+
+    open_casual <- as.data.frame(cbind(allages, ma, ma2, open_marcoh_meandeg))
+    colnames(open_casual) <- c("Ego Age", "Weighted Egodata - Restricted", "Weighted Egodata", "Final State of Network")
+
+    open_plot <- ggplot() +
+      geom_bar(data = open_casual, aes(x=`Ego Age`, y=`Final State of Network`, fill="Final State of Network"), stat = "identity",
+               fill="#999999") +
+      geom_point(open_casual, mapping=aes(x=`Ego Age`, y=`Weighted Egodata - Restricted`, color="Weighted Egodata - Restricted"))  +
+      geom_point(open_casual, mapping=aes(x=`Ego Age`, y=`Weighted Egodata`, color="Weighted Egodata")) +
+      xlab("Ego Age") +
+      ylab("Mean Degree") +
+      ggtitle("Mean Degree of Casuals by Ego Age") +
+      scale_color_manual(name = "Egodata",
+                         labels = c("Weighted Egodata", "Weighted Egodata, All Alters"),
+                         values = c("darkblue", "darkred"))
+  } else {
+    nsims <- x$control$nsims
+    rels <- active_rels(x)
+    open_pop_counts <- get_agedist(x)
+
+    m <- rels[[2]]
+
+    ages <- c(m$age1, m$age2)
+
+    if (maxage==65){
+      ages <- ages[ages<45]
+      open_pop_counts <- open_pop_counts[which(as.numeric(names(open_pop_counts))<45)]
+    }
+
+    tab <- table(ages)
+
+    if(length(tab) < length(open_pop_counts)){
+      missing <- setdiff(as.numeric(names(open_pop_counts)), as.numeric(names(tab)))
+      if (missing==15){
+        tab <- c(0,tab)
+      }
+    }
+
+
+    tab <- tab/nsims
+    allages <- 15:44
+    ma <- casual_ages_restricted[,2][[1]]
+    ma2 <- casual_ages_all[,2][[1]]
+
+    open_marcoh_meandeg <- tab/open_pop_counts
+
+    open_casual <- as.data.frame(cbind(allages, ma, ma2, open_marcoh_meandeg))
+    colnames(open_casual) <- c("Ego Age", "Weighted Egodata - Restricted", "Weighted Egodata", "Final State of Network")
+
+    open_plot <- ggplot() +
+      geom_bar(data = open_casual, aes(x=`Ego Age`, y=`Final State of Network`, fill="Final State of Network"), stat = "identity",
+               fill="#999999") +
+      geom_point(open_casual, mapping=aes(x=`Ego Age`, y=`Weighted Egodata - Restricted`, color="Weighted Egodata - Restricted"))  +
+      geom_point(open_casual, mapping=aes(x=`Ego Age`, y=`Weighted Egodata`, color="Weighted Egodata"))+
+      xlab("Ego Age") +
+      ylab("Mean Degree") +
+      ggtitle("Mean Degree of Casuals by Ego Age") +
+      scale_color_manual(name = "Egodata",
+                         labels = c("Weighted Egodata", "Weighted Egodata, All Alters"),
+                         values = c("darkblue", "darkred"))
+
   }
-
-  open_casual_meandeg <- tabO/open_pop_counts
-
-  open_casual <- as.data.frame(cbind(allages, ca, ca2, open_casual_meandeg))
-  colnames(open_casual) <- c("Ego Age", "Weighted Egodata - Restricted", "Weighted Egodata", "Final State of Network")
-
-  open_plot_casual <- ggplot2::ggplot() +
-    geom_bar(data = open_casual, aes(x=`Ego Age`, y=`Final State of Network`, fill="Final State of Network"), stat = "identity",
-             fill="#999999") +
-    geom_point(open_casual, mapping=aes(x=`Ego Age`, y=`Weighted Egodata - Restricted`, color="Weighted Egodata - Restricted"))  +
-    geom_point(open_casual, mapping=aes(x=`Ego Age`, y=`Weighted Egodata`, color="Weighted Egodata"))+
-    labs(x="Ego Age", y="Count", title="Mean Degree of Casual Rels by Ego Age") +
-    scale_color_manual(name = "Egodata",
-                       labels = c("Weighted Egodata", "Weighted Egodata, All Alters"),
-                       values = c("darkblue", "darkred"))
-
-  dat <- list(open_plot_casual, open_casual)
+  dat <- list(open_plot, open_casual)
 
   return(dat)
+
 }
 
 #' @title Final Mean Degree Distribution of Simulation
