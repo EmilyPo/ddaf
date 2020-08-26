@@ -4,7 +4,7 @@
 \alias{egodata_meandegs}
 \title{Mean Degree Distributions in Egodata}
 \usage{
-egodata_meandegs()
+egodata_meandegs(categorical = FALSE)
 }
 \description{
 This function takes the egodata (stored in system data) and summarizes the expected mean degree

@@ -4,7 +4,13 @@
 \alias{casual_dist}
 \title{Distribution of Mean Degree by Age in Casual Network}
 \usage{
-casual_dist(x, maxage, casual_ages_restricted, casual_ages_all)
+casual_dist(
+  x,
+  maxage,
+  casual_ages_restricted,
+  casual_ages_all,
+  categorical = FALSE
+)
 }
 \arguments{
 \item{x}{network simulation object}

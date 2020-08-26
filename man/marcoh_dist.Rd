@@ -4,7 +4,13 @@
 \alias{marcoh_dist}
 \title{Distribution of Mean Degree by Age in Marriage/Cohab Network}
 \usage{
-marcoh_dist(x, maxage, marcoh_ages_restricted, marcoh_ages_all)
+marcoh_dist(
+  x,
+  maxage,
+  marcoh_ages_restricted,
+  marcoh_ages_all,
+  categorical = FALSE
+)
 }
 \arguments{
 \item{x}{network simulation object}
@@ -14,6 +20,8 @@ marcoh_dist(x, maxage, marcoh_ages_restricted, marcoh_ages_all)
 \item{marcoh_ages_restricted}{dist of expected mean degree using age-restricted alter set}
 
 \item{marcoh_ages_all}{dist of exp mean degree using all reported alters}
+
+\item{categorical}{default = FALSE, whether or not to return dist by age or agecat}
 }
 \description{
 This function takes the list of relationships active on the last time step of
