@@ -15,11 +15,12 @@
 #'
 #' @export
 
-marcoh_dist <- function(x, maxage, marcoh_ages_restricted, marcoh_ages_all, categorical=FALSE){
+marcoh_dist <- function(x, maxage, categorical=FALSE){
   if (categorical==TRUE){
     nsims <- x$control$nsims
     rels <- active_rels(x)
     open_pop_counts <- get_agedist(x, categorical=TRUE)
+    egodat <- egodata_meandegs(categorical=T)
 
     m <- rels[[1]]
     ages <- c(m$age1, m$age2)
@@ -36,8 +37,8 @@ marcoh_dist <- function(x, maxage, marcoh_ages_restricted, marcoh_ages_all, cate
 
     tab <- table(ages)/nsims
     allages <- c(15, 20, 25, 30, 35, 40)
-    ma <- marcoh_ages_restricted[,2][[1]]
-    ma2 <- marcoh_ages_all[,2][[1]]
+    ma <- egodat[[1]][,2][[1]]
+    ma2 <- egodat[[2]][,2][[1]]
 
 
     open_marcoh_meandeg <- tab/open_pop_counts
@@ -60,6 +61,7 @@ marcoh_dist <- function(x, maxage, marcoh_ages_restricted, marcoh_ages_all, cate
   nsims <- x$control$nsims
   rels <- active_rels(x)
   open_pop_counts <- get_agedist(x)
+  egodat <- egodata_meandegs()
 
   m <- rels[[1]]
 
@@ -82,8 +84,8 @@ marcoh_dist <- function(x, maxage, marcoh_ages_restricted, marcoh_ages_all, cate
 
   tab <- tab/nsims
   allages <- 15:44
-  ma <- marcoh_ages_restricted[,2][[1]]
-  ma2 <- marcoh_ages_all[,2][[1]]
+  ma <- egodat[[1]][,2][[1]]
+  ma2 <- egodat[[2]][,2][[1]]
 
   open_marcoh_meandeg <- tab/open_pop_counts
 
@@ -123,11 +125,12 @@ marcoh_dist <- function(x, maxage, marcoh_ages_restricted, marcoh_ages_all, cate
 #'
 #' @import ggplot2
 #' @export
-casual_dist <- function(x, maxage, casual_ages_restricted, casual_ages_all, categorical=FALSE){
+casual_dist <- function(x, maxage, categorical=FALSE){
   if (categorical==TRUE){
     nsims <- x$control$nsims
     rels <- active_rels(x)
     open_pop_counts <- get_agedist(x, categorical=TRUE)
+    egodat <- egodata_meandegs(categorical = T)
 
     m <- rels[[2]]
     ages <- c(m$age1, m$age2)
@@ -144,8 +147,8 @@ casual_dist <- function(x, maxage, casual_ages_restricted, casual_ages_all, cate
 
     tab <- table(ages)/nsims
     allages <- c(15, 20, 25, 30, 35, 40)
-    ma <- casual_ages_restricted[,2][[1]]
-    ma2 <- casual_ages_all[,2][[1]]
+    ma <- egodat[[3]][,2][[1]]
+    ma2 <- egodat[[4]][,2][[1]]
 
 
     open_marcoh_meandeg <- tab/open_pop_counts
@@ -168,6 +171,7 @@ casual_dist <- function(x, maxage, casual_ages_restricted, casual_ages_all, cate
     nsims <- x$control$nsims
     rels <- active_rels(x)
     open_pop_counts <- get_agedist(x)
+    egodat <- egodata_meandegs()
 
     m <- rels[[2]]
 
@@ -190,8 +194,8 @@ casual_dist <- function(x, maxage, casual_ages_restricted, casual_ages_all, cate
 
     tab <- tab/nsims
     allages <- 15:44
-    ma <- casual_ages_restricted[,2][[1]]
-    ma2 <- casual_ages_all[,2][[1]]
+    ma <- egodat[[3]][,2][[1]]
+    ma2 <- egodat[[4]][,2][[1]]
 
     open_marcoh_meandeg <- tab/open_pop_counts
 
@@ -281,7 +285,6 @@ calc_meandeg <- function(x, maxage){
 #'
 duration_calcs <- function(x, maxage){
   active <- ddaf::active_rels(x)
-  completed <- ddaf::complete_rels(x)
 
   target_m <- round(x$nwparam[[1]]$coef.diss[[2]])
   target_c <- round(x$nwparam[[2]]$coef.diss[[2]])
@@ -289,9 +292,6 @@ duration_calcs <- function(x, maxage){
   if (maxage==45){
     mean_m_active <- round(mean(active[[1]]$len))
     mean_c_active <- round(mean(active[[2]]$len))
-
-    mean_m_completed <- round(mean(completed[[1]]$len))
-    mean_c_completed <- round(mean(completed[[2]]$len))
   }
 
   if (maxage==65){
@@ -307,28 +307,15 @@ duration_calcs <- function(x, maxage){
         (c$age1 < 45 & c$age2 >= 45) |
         (c$age1 < 45 & c$age2 < 45)),]
 
-    mc <- completed[[1]]
-    mc_young <- mc[which(
-      (mc$age1 >= 45 & mc$age2 <45) |
-        (mc$age1 < 45 & mc$age2 >= 45) |
-        (mc$age1 < 45 & mc$age2 < 45)),]
-
-    cc <- completed[[2]]
-    cc_young <- cc[which(
-      (cc$age1 >= 45 & cc$age2 <45) |
-        (cc$age1 < 45 & cc$age2 >= 45) |
-        (cc$age1 < 45 & cc$age2 < 45)),]
-
-
     mean_m_active <- round(mean(m_young$len))
     mean_c_active <- round(mean(c_young$len))
 
-    mean_m_completed <- round(mean(mc_young$len))
-    mean_c_completed <- round(mean(cc_young$len))
   }
 
-  dat <- matrix(c(target_m, mean_m_active, mean_m_completed,
-                  target_c, mean_c_active, mean_c_completed), nrow=2, byrow = T)
+  dat <- as.data.frame(matrix(c(target_m, mean_m_active, target_c, mean_c_active), nrow=2, byrow = T))
+  row.names(dat) <- c("Marriage/Cohab", "Casual")
+  colnames(dat) <- c("Target", "Simulation")
+  dat$`Pct Off` <- round(((dat$Simulation-dat$Target)/dat$Target)*100, 2)
 
   return(dat)
 }
