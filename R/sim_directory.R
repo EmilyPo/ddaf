@@ -1,4 +1,4 @@
-
+###### 5 sim runs ########
 # in "july2020" "partner corrections"
 #yescrossterms_yesoffset_no65_eligible_nocorrections <- make_small_netsim(sim_5_5200_offest)
 #usethis::use_data(yescrossterms_yesoffset_no65_eligible_nocorrections)
@@ -32,3 +32,5 @@
 #sim_5_5200_nocross_offset_65 <- readRDS("~/Dissertation/Duration_Simulations/sims/July2020/debut/sim_5_5200_nocross_offset_65.rds")
 #nocrossterms_yesoffset_yes65_debut_nocorrections <- make_small_netsim(sim_5_5200_nocross_offset_65)
 #usethis::use_data(nocrossterms_yesoffset_yes65_debut_nocorrections)
+
+###### 10 sim runs ######

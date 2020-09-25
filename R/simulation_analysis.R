@@ -239,13 +239,14 @@ calc_meandeg <- function(x, maxage){
     for (i in 1:nsims) marcohs[i] <- (nrow(x$el[[i]][[1]])*2)/x$epi$num[[i]][nsteps]
     meanMarcoh <- round(mean(marcohs),3)
     targetm <- round((x$nwparam[[1]]$target.stats[[1]]/50000)*2,3)
+    offm <- (meanMarcoh - targetm) / targetm
 
     others <- 1:nsims
     for (i in 1:nsims) others[i] <- (nrow(x$el[[i]][[2]])*2)/x$epi$num[[i]][nsteps]
     meanOther <- round(mean(others),3)
     targeto <- round((x$nwparam[[2]]$target.stats[[1]]/50000)*2,3)
-
-    dat <- matrix(c(targetm, meanMarcoh, targeto, meanOther), nrow=2, byrow = T)
+    offo <- (meanOther - targeto) / targeto
+    dat <- matrix(c(targetm, meanMarcoh, offm, targeto, meanOther, offo), nrow=2, byrow = T)
   }
 
   if (maxage==65){
@@ -257,6 +258,7 @@ calc_meandeg <- function(x, maxage){
     }
     meanMarcoh <- round(mean(marcohs),3)
     targetm <- round((x$nwparam[[1]]$target.stats[[1]]/50000)*2,3)
+    offm <- (meanMarcoh - targetm) / targetm
 
     others <- 1:nsims
     for (i in 1:nsims){
@@ -265,8 +267,9 @@ calc_meandeg <- function(x, maxage){
     }
     meanOther <- round(mean(others),3)
     targeto <- round((x$nwparam[[2]]$target.stats[[1]]/50000)*2,3)
+    offo <- (meanOther - targeto) / targeto
 
-    dat <- matrix(c(targetm, meanMarcoh, targeto, meanOther), nrow=2, byrow = T)
+    dat <- matrix(c(targetm, meanMarcoh, offm, targeto, meanOther, offo), nrow=2, byrow = T)
   }
 
   return(dat)
