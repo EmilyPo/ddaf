@@ -15,15 +15,15 @@ make_small_netsim <- function(x, keep_epi=NULL, keep_attr=NULL){
 
   if (is.null(keep_epi)){
     if("effectivedebutprop" %in% ls(x$epi)){
-    keep_epi <- c("meanDegMarcoh", "meanDegOther", "marcoh", "other", "other.new", "other.end",
-                  "marcoh.new", "marcoh.end", "effectivedebutprop")
+      keep_epi <- c("meanDegMarcoh", "meanDegOther", "marcoh", "other", "other.new", "other.end",
+                    "marcoh.new", "marcoh.end", "effectivedebutprop")
     } else {
       keep_epi <- c("meanDegMarcoh", "meanDegOther", "marcoh", "other", "other.new", "other.end",
                     "marcoh.new", "marcoh.end")
     }
   } else {
     keep_epi <- keep_epi
-    }
+  }
 
   out$epi <- x$epi[keep_epi]
 
@@ -38,7 +38,7 @@ make_small_netsim <- function(x, keep_epi=NULL, keep_attr=NULL){
 
   } else {
     keep_attr <- keep_attr
-    }
+  }
 
   for (i in 1:x$control$nsims){
     x$attr[[i]] <- x$attr[[i]][keep_attr]
@@ -69,12 +69,11 @@ make_summary_stats <- function(x, maxage, simname){
   out$meandurs <- as.matrix(duration_calcs(x, maxage))
 
   if ("effectivedebutprop" %in% ls(x$epi)){
-  out$effdebut <- apply(x$epi$effectivedebutprop, 1, mean)
+    out$effdebut <- apply(x$epi$effectivedebutprop, 1, mean)
   }
 
   out$debut <- apply(x$epi$debutprop, 1, mean)
 
   return(out)
 }
-
 
