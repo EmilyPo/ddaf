@@ -1,3 +1,4 @@
+
 #### 10 sims #####
 # in "july2020" "partner corrections" "nocross"
 sim_10_5200_offset_nocross_eligible <- readRDS("~/Dissertation/Duration_Simulations/for_dissertation/10sims/sim_10_5200_nocross_offset_eligible_effectivedebutracking.rds")
@@ -89,3 +90,4 @@ saveRDS(nocrossterms_yesoffset_no65_debut_nodefactor_withcorrections, here("for_
 #sim_5_5200_nocross_offset_65 <- readRDS("~/Dissertation/Duration_Simulations/sims/July2020/debut/sim_5_5200_nocross_offset_65.rds")
 #nocrossterms_yesoffset_yes65_debut_nocorrections <- make_small_netsim(sim_5_5200_nocross_offset_65)
 #usethis::use_data(nocrossterms_yesoffset_yes65_debut_nocorrections)
+
