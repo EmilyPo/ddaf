@@ -202,3 +202,80 @@ get_agedist <- function(x, categorical=FALSE){
 
   return(means)
 }
+
+#------------ EPT funcions -----------------------------------
+
+#' @title Get Active Agedist
+#'
+#' @description This function takes final age attribute and generates a dist of counts
+#' by age (only 15:44 counts), averaged across all simulation runs
+#'
+#' @param x is the netsim output
+#' @export
+#'
+get_agedist_ept <- function(x){
+  nsims <- x$control$nsims
+  fages <- NULL
+  mages <- NULL
+
+  for (i in 1:nsims){
+    f <- floor(x$attr[[i]]$ageF)
+    fages <- c(fages, f)
+
+    m <- floor(x$attr[[i]]$ageM)
+    mages <- c(mages, m)
+  }
+
+  fages <- fages[fages<45 & fages>0]
+  fmeans <- table(round(fages))/nsims
+  mages <- mages[mages<45 & mages>0]
+  mmeans <- table(round(mages))/nsims
+
+  return(list(fmeans, mmeans))
+}
+
+get_final_edgelist <- function(x, network, byagesex=TRUE){
+  nsims <- x$control$nsims
+  el <- x$el
+
+  if (byagesex==TRUE){
+
+    females <- NULL
+    males <- NULL
+    for (i in 1:nsims) {
+      a <- floor(x$attr[[i]]$ageF[el[[i]][[network]]])
+      b <- floor(x$attr[[i]]$ageM[el[[i]][[network]]])
+
+      females <- c(females, a)
+      males <- c(males,b)
+
+      l <- list(table(females), table(males))
+    }
+
+    for (i in 1:2) {
+      e <- l[[i]]
+      d <- as.data.frame(e[-1])
+      s <- setdiff(15:44, d[,1])
+
+      if (length(s>0)){
+        add <- data.frame(as.factor(s), rep(0,length(s)))
+        colnames(add) <- colnames(d)
+        d <- rbind(d, add)
+        d[,1] <- as.numeric(as.character(d[,1]))
+        d <- d[order(d[,1]),]
+      }
+
+      l[[i]] <- d
+    }
+
+    return(l)
+
+  }
+  else {
+    el <- NULL
+    for (i in 1:nsims) {
+      el[[i]] <- x$el[[i]][[network]]
+    }
+    return(el)
+  }
+}

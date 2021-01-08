@@ -1,3 +1,4 @@
+#-------------- rel dur/demography project functions -------------------------------------------------
 #' @title Distribution of Mean Degree by Age in Marriage/Cohab Network
 #'
 #' @description This function takes the list of relationships active on the last time step of
@@ -319,3 +320,184 @@ duration_calcs <- function(x, maxage){
 
   return(dat)
 }
+
+#-------------- EPT project functions -------------------------------------------------
+#' @title Distribution of Mean Degree by Age in Any Network
+#'
+#' @description This function takes the list of relationships active on the last time step of
+#' the simulation (averaged over each run) and calculates the mean degree by age. It
+#' then takes that distribution and plots it under the expected distribution based on
+#' the egodata. The exported object includes both the ggplot object and the raw data.
+#'
+#' does NOT include unrestricted alters
+#'
+#' @param x network simulation object
+#' @param network which network to pull: 1=marriage, 2=cohab, 3=casual
+#'
+#' @import ggplot2
+#'
+#' @export
+
+get_dist <- function(x, network){
+
+  nsims <- x$control$nsims
+  el <- get_mean_edgelist(x, network, byagesex=TRUE)
+  pop <- get_agedist_ept(x)
+  egodat <- egodata_meandegs_ept()
+
+
+  ## grab correct target mean degs by age/sex of selected network
+    if (network==1){
+      female <- egodat[[1]][,2]
+      male <- egodat[[2]][,2]
+    }
+
+    if (network==2){
+      female <- egodat[[3]][,2]
+      male <- egodat[[4]][,2]
+    }
+
+    if (network==3){
+      female <- egodat[[5]][,2]
+      male <- egodat[[6]][,2]
+    }
+
+    # edges counts by age for males and females
+    females <- el[[1]]
+    males <- el[[2]]
+
+    # divide by mean pop counts
+    females[,2] <- females[,2]/as.numeric(pop[[1]])
+    males[,2] <- males[,2]/as.numeric(pop[[2]])
+
+    # combine mean sim deg and mean egodata deg
+    fdata <- as.data.frame(cbind(females, female))
+    mdata <- as.data.frame(cbind(males, male))
+
+    colnames(fdata) <- c("Ego Age", "Sim", "Egodata")
+    colnames(mdata) <- c("Ego Age", "Sim", "Egodata")
+
+    # plots
+   fplot <- ggplot() +
+      geom_bar(data = fdata, aes(x=`Ego Age`, y=Sim, fill="Sim"), stat = "identity",
+               fill="#999999") +
+      geom_point(fdata, mapping=aes(x=`Ego Age`, y=Egodata, color="blue"))  +
+      xlab("Ego Age") +
+      ylab("Mean Degree") +
+      ggtitle("Mean Degree by Ego Age")
+
+   mplot <- ggplot() +
+     geom_bar(data = mdata, aes(x=`Ego Age`, y=Sim, fill="Sim"), stat = "identity",
+              fill="#999999") +
+     geom_point(mdata, mapping=aes(x=`Ego Age`, y=Egodata, color="blue"))  +
+     xlab("Ego Age") +
+     ylab("Mean Degree") +
+     ggtitle("Mean Degree by Ego Age")
+
+  dat <- list(fplot, mplot, fdata, mdata)
+
+  return(dat)
+
+}
+
+
+
+#' @title Final Mean Degree Distribution of Simulation
+#'
+#' @description This function calculates the target mean degree and the mean degree at the end of
+#' the simulation (averaged across each run) for each network.
+#'
+#' @param x network simulation object
+#' @param maxage age at which egos depart model - either 45 or 65
+#'
+#' @export
+calc_meandeg <- function(x, maxage){
+  nsteps <- x$control$nsteps
+  nsims <- x$control$nsims
+
+  if (maxage==45){
+    marcohs <- 1:nsims
+    for (i in 1:nsims) marcohs[i] <- (nrow(x$el[[i]][[1]])*2)/x$epi$num[[i]][nsteps]
+    meanMarcoh <- round(mean(marcohs),3)
+    targetm <- round((x$nwparam[[1]]$target.stats[[1]]/50000)*2,3)
+
+    others <- 1:nsims
+    for (i in 1:nsims) others[i] <- (nrow(x$el[[i]][[2]])*2)/x$epi$num[[i]][nsteps]
+    meanOther <- round(mean(others),3)
+    targeto <- round((x$nwparam[[2]]$target.stats[[1]]/50000)*2,3)
+
+    dat <- matrix(c(targetm, meanMarcoh, targeto, meanOther), nrow=2, byrow = T)
+  }
+
+  if (maxage==65){
+    marcohs <- 1:nsims
+
+    for (i in 1:nsims){
+      rels <- sum(table(floor(x$attr[[i]]$age[x$el[[i]][[1]]]))[1:30])
+      marcohs[i] <- rels/sum(x$attr[[i]]$age<45)
+    }
+    meanMarcoh <- round(mean(marcohs),3)
+    targetm <- round((x$nwparam[[1]]$target.stats[[1]]/50000)*2,3)
+
+    others <- 1:nsims
+    for (i in 1:nsims){
+      rels <- sum(table(floor(x$attr[[i]]$age[x$el[[i]][[2]]]))[1:30])
+      others[i] <- rels/sum(x$attr[[i]]$age<45)
+    }
+    meanOther <- round(mean(others),3)
+    targeto <- round((x$nwparam[[2]]$target.stats[[1]]/50000)*2,3)
+
+    dat <- matrix(c(targetm, meanMarcoh, targeto, meanOther), nrow=2, byrow = T)
+  }
+
+  return(dat)
+}
+
+#' @title Calculate Active and Completed Mean Relationship Length
+#'
+#' @description This function calculates the mean relationship length of active rels (averaged
+#' across each run) in each network, the mean length of completed rels, and includes
+#' the target length in the exported object.
+#'
+#' @param x network simulation object
+#' @param maxage age at which egos depart model - either 45 or 65
+#'
+#' @export
+#'
+duration_calcs <- function(x, maxage){
+  active <- ddaf::active_rels(x)
+
+  target_m <- round(x$nwparam[[1]]$coef.diss[[2]])
+  target_c <- round(x$nwparam[[2]]$coef.diss[[2]])
+
+  if (maxage==45){
+    mean_m_active <- round(mean(active[[1]]$len))
+    mean_c_active <- round(mean(active[[2]]$len))
+  }
+
+  if (maxage==65){
+    m <- active[[1]]
+    m_young <- m[which(
+      (m$age1 >= 45 & m$age2 <45) |
+        (m$age1 < 45 & m$age2 >= 45) |
+        (m$age1 < 45 & m$age2 < 45)),]
+
+    c <- active[[2]]
+    c_young <- c[which(
+      (c$age1 >= 45 & c$age2 <45) |
+        (c$age1 < 45 & c$age2 >= 45) |
+        (c$age1 < 45 & c$age2 < 45)),]
+
+    mean_m_active <- round(mean(m_young$len))
+    mean_c_active <- round(mean(c_young$len))
+
+  }
+
+  dat <- as.data.frame(matrix(c(target_m, mean_m_active, target_c, mean_c_active), nrow=2, byrow = T))
+  row.names(dat) <- c("Marriage/Cohab", "Casual")
+  colnames(dat) <- c("Target", "Simulation")
+  dat$`Pct Off` <- round(((dat$Simulation-dat$Target)/dat$Target)*100, 2)
+
+  return(dat)
+}
+

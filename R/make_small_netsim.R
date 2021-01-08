@@ -12,7 +12,7 @@ make_small_netsim <- function(x){
   out$nwparam <- x$nwparam
   keep <- c("num", "num.male", "num.feml", "meanAge", "propMale", "b.flow", "ds.flow", "marcoh.departed", "other.departed", "debutprop",
             "coef.form.marcoh", "coef.form.casual", "meanDegMarcoh", "meanDegOther", "marcoh", "other", "other.new", "other.end",
-            "marcoh.new", "marcoh.end")
+            "marcoh.new", "marcoh.end", "effectivedebutprop")
   out$epi <- x$epi[keep]
   out$el <- x$el
 
